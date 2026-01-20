@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8">
+	<th:block th:replace="~{common/header :: header-library}"></th:block>
+	<title>My Page - Music Converter</title>
+	<style>
+        body { background-color: #f8f9fa; }
+        
+        /* 헤더 높이만큼 여백 확보 */
+        .content-body { padding-top: 80px; }
+
+        /* 카드 디자인 및 호버 효과 */
+        .history-card {
+            border: none;
+            border-radius: 1.2rem;
+            transition: all 0.3s ease;
+        }
+        .history-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.08) !important;
+        }
+
+        .status-badge {
+            font-size: 0.8rem;
+            padding: 5px 12px;
+            border-radius: 20px;
+        }
+
+        .text-primary { color: #764ba2 !important; } /* 메인 테마색 */
+        .btn-primary { background-color: #764ba2; border: none; }
+        .btn-primary:hover { background-color: #663d91; }
+    </style>
+</head>
+
+<body>
+<header th:replace="~{common/header :: menu}"></header>
+<main class="container content-body">
+
+<div class="row justify-content-center">
+	<div class="col-md-10 text-center mt-5">
+		<h2 class="fw-bold mb-2">My Music List</h2>
+		<p class="text-muted mb-4">
+			<span id="userNickname" class="fw-bold text-primary text-decoration-underline">사용자</span>님이 변환하신 음악 목록입니다.
+		</p>
+		<div class="card p-4 shadow-sm border-0 rounded-4 bg-white mb-5">
+			<div class="input-group input-group-lg">
+				<input type="text" id="searchInput" class="form-control border-light-subtle" placeholder="곡 제목으로 검색해보세요...">
+				<button class="btn btn-primary px-4" type="button" onclick="searchMusic()">검색</button>
+			</div>
+		</div>
+		<div class="row justify-content-center">
+			<div class="col-md-12">
+				<div id="music-list-container" class="row g-4"></div>
+				<div id="sentinel" style="height: 50px;"></div>
+				<div id="loading-spinner" class="py-4 d-none text-center">
+					<div class="spinner-border text-primary" role="status"></div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+</main>
+
+
+<script>
+let currentPage = 0;
+let isLastPage = false;
+let isLoading = false;
+
+
+
+
+document.addEventListener("DOMContentLoaded", function() {
+	// 1. 닉네임 설정
+	const nickname = localStorage.getItem('nickname');
+	if (nickname) {
+		document.getElementById('userNickname').innerText = nickname;
+	}
+	
+	// 2. 로그인 여부 체크
+	const token = localStorage.getItem('accessToken');
+	if (!token) {
+		alert("로그인이 필요한 페이지입니다.");
+		window.location.href = "/";
+		return;
+	}
+	// 3. 무한 스크롤 관찰자 설정 (감시 시작)
+    const observer = new IntersectionObserver((entries) => {
+        // 바닥(sentinel)이 보이고 + 로딩 중이 아니고 + 마지막 페이지가 아닐 때만 다음 페이지 호출
+        if (entries[0].isIntersecting && !isLoading && !isLastPage) {
+            console.log("바닥 감지! 다음 페이지를 불러옵니다.");
+            loadMyMusicList();
+        }
+    }, { threshold: 0.1 });
+	
+    const sentinel = document.getElementById('sentinel');
+    if (sentinel) observer.observe(sentinel);
+    
+	console.log("UI 렌더링 완료. 서버 연결은 컨트롤러 생성 후 활성화 예정.");
+	loadMyMusicList();
+});
+
+
+// 나중에 검색 기능 
+function searchMusic() {
+	const keyword = document.getElementById('searchInput').value;
+	alert("검색 기능은 준비 중입니다: " + keyword);
+}
+
+
+
+function renderPage() {
+	// 
+	console.log("Mypage: renderPage skip (static UI)");
+}
+
+
+
+async function loadMyMusicList() {
+	if (isLastPage || isLoading) return;
+	isLoading = true;
+    const spinner = document.getElementById('loading-spinner');
+    if (spinner) spinner.classList.remove('d-none');
+	try {
+		console.log(`서버 요청: 페이지 ${currentPage}`);
+		// authFetch가 정의되어 있어야 합니다! (공통 라이브러리 혹은 직접 정의)
+		const response = await authFetch(`/api/list?page=${currentPage}&size=10`);
+		if (response.ok) {
+			
+			// Slice 객체 수신
+			const data = await response.json();
+			console.log("서비 응답 데이터:", data);
+			
+			// 데이터 그리기 함수 호출
+            renderMusicCards(data.content);
+			
+         	// 마지막 페이지 여부 업데이트
+            isLastPage = data.last; 
+         	
+            if (!isLastPage) {
+            	// 다음 페이지 번호 준비
+            	currentPage++;
+            }
+		} else {
+			console.error("서버 응답 에러:", response.status);
+		}
+	} catch (err) {
+		console.error("네트워크 오류:", err);
+	} finally {
+        isLoading = false;
+        if (spinner) spinner.classList.add('d-none');
+    }
+}
+        
+
+
+//데이터를 받아서 카드로 그려주는 함수
+function renderMusicCards(musicList) {
+    const container = document.getElementById('music-list-container');
+    
+    if (musicList.length === 0 && currentPage === 0) {
+        container.innerHTML = `<div class="col-12 text-center py-5 text-muted">아직 변환된 음악이 없습니다.</div>`;
+        return;
+    }
+
+    musicList.forEach(music => {
+        const cardHtml = `
+            <div class="col-md-6 col-lg-4">
+                <div class="card history-card shadow-sm h-100 p-3">
+                    <div class="d-flex align-items-center mb-3">
+                        <img src="${music.albumCover || '/images/default-cover.png'}" 
+                             class="rounded-3 me-3" style="width: 60px; height: 60px; object-fit: cover;">
+                        <div class="text-start overflow-hidden">
+                            <h6 class="mb-0 text-truncate">${music.title}</h6>
+                            <small class="text-muted">${music.artist}</small>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-auto">
+                        <span class="status-badge bg-light text-primary">${music.genre || 'Music'}</span>
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-outline-primary" onclick="playMusic('${music.filePath}')">▶</button>
+                            <a href="${music.filePath}" download class="btn btn-sm btn-outline-secondary">⬇</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        container.insertAdjacentHTML('beforeend', cardHtml);
+    });
+}
+        
+</script>
+</body>
+</html>

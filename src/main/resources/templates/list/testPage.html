@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8">
+	<th:block th:replace="~{common/header :: header-library}"></th:block>
+	<title>My Page - Music Converter</title>
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+	<style>
+		/* 1. 전체 페이지 스크롤 방지 (이중 스크롤 제거 핵심) */
+        html, body {
+            height: 100%;
+            margin: 0;
+            overflow: hidden; 
+            /* background-color: #f8f9fa; */
+            background-color: #ffffff;;
+        }
+        
+        /* 헤더 높이만큼 여백 확보 */
+        .content-body { padding-top: 80px; }
+
+        /* 슬림한 카드 디자인 (모바일 최적화) */
+        .history-card {
+            border: 1px solid rgba(0,0,0,0.05) !important;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+            background: #fff;
+            border-bottom: 0.5px solid #eee !important; /* 아주 얇은 구분선 */
+            transition: background 0.2s;
+        }
+        .history-card:hover {
+			/*transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05) !important; */
+            background-color: #f9f9f9 !important;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        .status-badge {
+            font-size: 0.8rem;
+            padding: 5px 12px;
+            border-radius: 20px;
+        }
+        
+		/* 메인 테마색 */
+        .text-primary {
+        	color: #764ba2 !important;
+        }
+        
+        .btn-primary {
+        	background-color: #764ba2;
+        	border: none;
+        }
+        .btn-primary:hover {
+        	background-color: #663d91;
+        }
+        .sticky-top {
+        	/* 배경색을 페이지 배경과 맞추기 */
+        	background-color: #ffffff !important;
+        	/* 그림자로 스크롤 될 때 구분감 */
+        	box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+        
+        /* 3. 데이터 스크롤 영역 */
+        #scroll-container {
+            flex: 1;
+            /* 헤더(80) + 고정섹션(약 95) */
+            margin-top: 175px; 
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 30px;
+        }
+        #scroll-container::-webkit-scrollbar {
+        	width: 5px;
+        }
+        #scroll-container::-webkit-scrollbar-thumb {
+        	background: #ddd; border-radius: 10px;
+        }
+        
+        /* 기존 .history-card 스타일을 아래 내용으로 교체하거나 추가하세요 */
+        .history-card {
+        	border: none !important;
+        	border-radius: 0;
+        	background: transparent;
+        	transition: background 0.2s ease;
+        	/* 하단 구분선 */
+        	border-bottom: 1px solid rgba(0,0,0,0.06) !important; 
+        }
+        
+        .history-card:hover {
+        	/* 튀어나오는 효과 제거 */
+        	transform: none !important;
+        	/* 살짝 눌리는 느낌만 부여 */
+        	background-color: rgba(0,0,0,0.02);
+        	box-shadow: none !important;
+        }
+        
+        /* 앨범 아트에만 살짝 둥근 효과 */
+        .album-art {
+        	width: 52px;
+        	height: 52px;
+        	border-radius: 6px;
+        	object-fit: cover;
+        	flex-shrink: 0;
+        }
+        
+        /* 재생/다운로드 버튼을 더 깔끔하게 */
+        .action-btn {
+        	/* 기본 검정 계열 */
+        	color: #333;
+        	font-size: 1.1rem;
+        	padding: 8px;
+        	transition: opacity 0.2s;
+        }
+        
+        .action-btn:active {
+        	opacity: 0.5;
+        }
+        
+        /* SweetAlert2 팝업 크기 및 폰트 미세 조정 */
+        .swal2-popup {
+        	padding: 1rem !important;
+        	border-radius: 15px !important;
+        }
+        .swal2-title {
+        /* 제목 크기 축소 */
+		    font-size: 1.1rem !important; 
+		}
+		.swal2-html-container {
+			/* 본문 크기 축소 */
+		    font-size: 0.9rem !important; 
+		}
+		.swal2-confirm, .swal2-cancel {
+			/* 버튼 크기 축소 */
+		    font-size: 0.85rem !important; 
+		    padding: 8px 16px !important;
+		}
+    </style>
+</head>
+
+<body>
+<header th:replace="~{common/header :: menu}"></header>
+<main class="container content-body">
+
+<div class="fixed-top-section bg-white" style="position: fixed; top: 90px; left: 0; right: 0; z-index: 1020;">
+    <div class="container text-center pt-4">
+        <h2 class="fw-bold mb-1" style="font-size: 1.5rem;">My Music List</h2>
+        <p class="text-muted mb-2 small">
+            <span id="userNickname" class="fw-bold text-primary">사용자</span>님의 음악 목록
+        </p>
+        
+        <div class="card border-0 bg-light-subtle rounded-4 mb-2">
+            <div class="card-body p-2">
+                <div class="input-group">
+                    <input type="text" id="searchInput" class="form-control border-0 bg-transparent" placeholder="곡 제목으로 검색...">
+                    <button class="btn btn-primary rounded-3 px-3" type="button" onclick="searchMusic()">검색</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="scroll-container" style="margin-top: 180px; height: calc(100vh - 180px); overflow-y: auto; padding-bottom: 80px;">
+    <div class="container">
+        <div id="music-list-container" class="row g-4">
+            </div>
+        
+        <div id="sentinel" style="height: 50px;"></div>
+        
+        <div id="loading-spinner" class="py-4 d-none text-center">
+            <div class="spinner-border text-primary" role="status"></div>
+        </div>
+    </div>
+</div>
+</main>
+
+
+<script>
+
+async function downloadMusic(filePath, title, artist) {
+	// 1. 작은 알림창으로 시작 알림
+    const Toast = Swal.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 2000
+    });
+    Toast.fire({ icon: 'info', title: '다운로드를 요청 중입니다...' });
+
+    try {
+        // 2. 컨트롤러(/api/fileDownload)로 JSON 데이터 전송
+        const response = await authFetch('/api/fileDownload', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                artist: artist,
+                title: title,
+                filePath: filePath
+            })
+        });
+
+        if (!response.ok) throw new Error("다운로드 권한이 없거나 파일이 없습니다.");
+
+        /* // 3. 서버에서 보낸 스트림을 Blob(바이너리 데이터)으로 받기
+        const blob = await response.blob();
+        
+        // 4. 브라우저에서 파일을 저장하기 위한 가상 링크 생성
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        
+        // 파일명 설정 (가수-제목.mp3)
+        a.download = `${artist}-${title}.mp3`;
+        
+        document.body.appendChild(a);
+        a.click(); // 실제 다운로드 실행
+        
+        // 5. 메모리 정리 및 제거
+        window.URL.revokeObjectURL(url);
+        a.remove(); */
+
+    } catch (error) {
+        console.error("Download Error:", error);
+        Swal.fire({
+            title: '오류 발생',
+            text: '다운로드 중 문제가 발생했습니다.',
+            icon: 'error',
+            width: '300px'
+        });
+    }
+
+    
+}
+/* 
+async function downloadMusic(filePath, title, artist) {
+    try {
+        const response = await authFetch('/api/fileDownload', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                artist: artist,
+                title: title,
+                filePath: filePath
+            })
+        });
+
+        if (!response.ok) throw new Error("다운로드 권한이 없거나 서버 오류입니다.");
+
+        // 파일 데이터(Blob) 처리
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${artist}-${title}.mp3`;
+        document.body.appendChild(a);
+        a.click();
+        
+        window.URL.revokeObjectURL(url);
+        a.remove();
+        
+    } catch (error) {
+        console.error("다운로드 에러:", error);
+        Swal.fire("오류", "다운로드 중 문제가 발생했습니다.", "error");
+    }
+} */
+
+
+//재생 버튼 기능 (토스트 형태 알림)
+function playMusic(filePath) {
+    console.log("재생 시도:", filePath);
+    
+    // 재생은 가벼운 안내가 좋으므로 우측 상단 토스트 알림 사용
+    const Toast = Swal.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 2000,
+        width: '400px', // 토스트 너비도 조절 가능
+        timerProgressBar: true
+    });
+
+    Toast.fire({
+        icon: 'info',
+        title: '재생 기능을 준비 중입니다.'
+    });
+}
+
+//삭제 버튼 기능 (확인 창 형태 알림)
+async function deleteMusic(musicId, element) {
+    // 1. 확인 창 띄우기
+    const result = await Swal.fire({
+        title: '삭제하시겠습니까?',
+        text: "목록에서 이 곡이 사라지며, 복구할 수 없습니다.",
+        icon: 'warning',
+        width: '300px', // 너비 축소
+        showCancelButton: true,
+        confirmButtonColor: '#764ba2', // 서비스 테마색
+        cancelButtonColor: '#aaa',
+        confirmButtonText: '삭제',
+        cancelButtonText: '취소',
+        reverseButtons: true // 확인/취소 버튼 위치 반전 (취소가 왼쪽)
+    });
+
+    // 2. 사용자가 '삭제'를 눌렀을 때만 실행
+    if (result.isConfirmed) {
+        console.log("실제 서버 삭제 요청 보낼 ID:", musicId);
+        
+        // 일단은 요청이 성공했다고 가정하고 화면에서 제거 (나중에 fetch와 연동)
+        element.closest('.col-12').remove();
+
+        // 삭제 완료 알림
+        Swal.fire({
+            title: '삭제되었습니다.',
+            icon: 'success',
+            width: '250px',
+            timer: 1000,
+            showConfirmButton: false
+        });
+    }
+}
+
+
+
+
+
+
+
+
+function refreshHeaderUI() {
+    const token = localStorage.getItem('accessToken');
+    const nickname = localStorage.getItem('nickname');
+    const userMenu = document.getElementById('user-menu');
+    const nicknameSpan = document.getElementById('user-nickname');
+        
+    if (token && userMenu) {
+        userMenu.classList.remove('d-none');
+        if (nicknameSpan) {
+            nicknameSpan.innerText = decodeURIComponent(nickname) + "님";
+        }
+    } else if (userMenu) {
+        userMenu.classList.add('d-none');
+    }
+}
+
+
+let currentPage = 0;
+let isLastPage = false;
+let isLoading = false;
+
+
+
+
+document.addEventListener("DOMContentLoaded", function() {
+	// 1. 닉네임 설정
+	const nickname = localStorage.getItem('nickname');
+	if (nickname) {
+		document.getElementById('userNickname').innerText = nickname;
+	}
+	
+	// 2. 로그인 여부 체크
+	const token = localStorage.getItem('accessToken');
+	if (!token) {
+		alert("로그인이 필요한 페이지입니다.");
+		window.location.href = "/";
+		return;
+	}
+	// 3. 무한 스크롤 관찰자 설정 (감시 시작)
+    const observer = new IntersectionObserver((entries) => {
+        // 바닥(sentinel)이 보이고 + 로딩 중이 아니고 + 마지막 페이지가 아닐 때만 다음 페이지 호출
+        if (entries[0].isIntersecting && !isLoading && !isLastPage) {
+            console.log("바닥 감지! 다음 페이지를 불러옵니다.");
+            loadMyMusicList();
+        }
+    }, { threshold: 0.1 });
+	
+    const sentinel = document.getElementById('sentinel');
+    if (sentinel) observer.observe(sentinel);
+    
+	console.log("UI 렌더링 완료. 서버 연결은 컨트롤러 생성 후 활성화 예정.");
+	loadMyMusicList();
+	
+	document.getElementById('searchInput').addEventListener('keypress', function(e) {
+	    if (e.key === 'Enter') {
+	        searchMusic();
+	    }
+	});
+	
+	
+	
+});
+
+// 1. 검색어를 저장할 전역 변수
+let currentKeyword = ""; 
+
+async function searchMusic() {
+	const searchInput = document.getElementById('searchInput');
+    currentKeyword = searchInput.value.trim(); // 검색어 가져오기
+ 	// 초기화: 검색을 새로 시작하므로 페이지를 0으로, 목록을 비움
+    currentPage = 0;
+    isLastPage = false;
+    document.getElementById('music-list-container').innerHTML = ""; 
+    
+    console.log("🔍 검색 시작:", currentKeyword);
+    
+    // 데이터 다시 불러오기
+    await loadMyMusicList(); 
+}
+
+
+
+function renderPage() {
+	// 
+	console.log("Mypage: renderPage skip (static UI)");
+}
+
+
+
+async function loadMyMusicList() {
+    // 로딩 중이거나 마지막 페이지면 더 이상 요청하지 않음
+    if (isLoading || isLastPage) return;
+    
+    isLoading = true;
+    const spinner = document.getElementById('loading-spinner');
+    if (spinner) spinner.classList.remove('d-none');
+
+    try {
+        console.log(`서버 요청: 페이지 ${currentPage}`);
+        // 1. 페이지 번호와 사이즈를 쿼리 파라미터로 전달
+        //const response = await authFetch(`/api/list?page=${currentPage}&size=20`);
+        const response = await authFetch(`/api/list?page=${currentPage}&size=15&keyword=${encodeURIComponent(currentKeyword)}`);
+        if (response.ok) {
+            const data = await response.json(); // Slice 또는 Page 객체 수신
+            
+            // 2. 서버 응답 데이터 구조에 따라 리스트 추출 (Slice 객체면 data.content)
+            const list = data.content ? data.content : data;
+            
+            // 3. 데이터 그리기
+            renderMusicCards(list);
+            
+            // 4. 마지막 페이지 여부 업데이트 (서버가 보내주는 last 필드 확인)
+            isLastPage = data.last; 
+            
+            // 5. 다음 요청을 위해 페이지 번호 증가
+            if (!isLastPage) {
+                currentPage++;
+            }
+        } else {
+            console.error("서버 응답 에러:", response.status);
+        }
+    } catch (err) {
+        console.error("네트워크 오류:", err);
+    } finally {
+        isLoading = false;
+        if (spinner) spinner.classList.add('d-none');
+    }
+}
+        
+
+
+function renderMusicCards(musicList) {
+    const container = document.getElementById('music-list-container');
+    
+    if (currentPage === 0 && (!musicList || musicList.length === 0)) {
+        container.innerHTML = `<div class="col-12 text-center py-5 text-muted">음악 목록이 비어있습니다.</div>`;
+        return;
+    }
+
+    musicList.forEach(music => {
+    	// 작은따옴표(')가 포함된 제목/가수명을 위해 escape 처리
+        const safeTitle = music.title.replace(/'/g, "\\'");
+        const safeArtist = (music.artist || "Unknown").replace(/'/g, "\\'");
+    	
+        const cardHtml = `
+        	<div class="col-12">
+        		<div class="card history-card p-2">
+        			<div class="d-flex align-items-center">
+            			<img src="${music.albumCover || '/asset/img/favicon.ico'}" class="album-art me-3">
+            			<div class="flex-grow-1 overflow-hidden" style="cursor: pointer;" onclick="musicInfo(${music.musicId})">
+            				<h6 class="mb-0 text-truncate" style="font-size: 1rem; font-weight: 500; letter-spacing: -0.3px;">
+            					${music.title}
+            				</h6>
+            				<p class="text-muted mb-0 small text-truncate" style="font-size: 0.85rem; opacity: 0.8;">
+            					${music.artist}
+            				</p>
+            			</div>
+            			<div class="d-flex align-items-center ms-2">
+            				<button class="btn action-btn text-primary" onclick="playMusic('${music.filePath}')">
+            					<i class="bi bi-play-fill" style="font-size: 1.5rem;"></i>
+            				</button>
+            				<button class="btn action-btn" onclick="downloadMusic('${music.filePath}', '${music.title.replace(/'/g, "\\'")}', '${music.artist.replace(/'/g, "\\'")}')">
+            					<i class="bi bi-download" style="font-size: 1.1rem;"></i>
+            				</button>
+            				<button class="btn action-btn" onclick="deleteMusic(${music.musicId}, this)">
+            					<i class="bi bi-x-lg" style="font-size: 1.1rem;"></i>
+            				</button>
+            			</div>
+            		</div>
+                </div>
+            </div>
+		`;
+		container.insertAdjacentHTML('beforeend', cardHtml);
+	});
+}
+
+function musicInfo(musicId) {
+    // 상세 페이지 경로로 이동 (예: /music/detail?id=123)
+    //window.location.href = `/music/detail?id=${musicId}`;
+	// 재생은 가벼운 안내가 좋으므로 우측 상단 토스트 알림 사용
+    const Toast = Swal.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 2000,
+        width: '400px', // 토스트 너비도 조절 가능
+        timerProgressBar: true
+    });
+
+    Toast.fire({
+        icon: 'info',
+        title: '재생 기능을 준비 중입니다.'
+    });
+}
+
+
+
+</script>
+</body>
+</html>

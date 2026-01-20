@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <th:block th:replace="~{common/header :: header-library}"></th:block>
+    <title>Music Detail - Card Style</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        /* 1. 전체 구조 */
+        html, body {
+            height: 100%; margin: 0; overflow-x: hidden; 
+            background-color: #f8f9fa; font-family: 'Pretendard', sans-serif;
+        }
+        .content-body {
+        	padding-top: 80px;
+        }
+        
+        /* 2. 중앙 집중형 컨테이너 */
+        .info-container {
+        	max-width: 600px;
+        	margin: 40px auto;
+        	padding: 0 20px;
+        }
+        
+        /* 3. 메인 상세 카드 (업로드 카드의 레이아웃 계승) */
+        .detail-card {
+            background: white;
+            border-radius: 24px; /* 업로드 카드와 동일 */
+            padding: 3rem 2rem;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.03);
+            border: 1px solid rgba(0,0,0,0.06);
+            text-align: center;
+            width: 100%;
+        }
+
+        /* 큰 앨범 아트 */
+        .album-art-main {
+            width: 220px; height: 220px;
+            border-radius: 20px;
+            object-fit: cover;
+            margin-bottom: 30px;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.1);
+            transition: 0.3s;
+        }
+        
+        .music-title-text {
+        	font-size: 1.75rem;
+        	font-weight: 700;
+        	color: #222;
+        	margin-bottom: 5px;
+        	white-space: nowrap;
+        	overflow: hidden;
+        	text-overflow: ellipsis;
+        }
+        
+        .music-artist-text {
+        	font-size: 1.1rem;
+        	color: #764ba2;
+        	font-weight: 500;
+        	margin-bottom: 20px;
+        	white-space: nowrap;
+        	overflow: hidden;
+        	text-overflow: ellipsis;
+        }
+        
+        
+        /* 배지 영역 (업로드 페이지 배지 스타일) */
+        .badge-row {
+        	display: flex;
+        	gap: 8px;
+        	justify-content: center;
+        	flex-wrap: wrap;
+        	margin-bottom: 30px;
+        }
+        
+        
+        .mini-badge {
+            font-size: 0.75rem;
+            padding: 4px 12px;
+            background: #f1f0ff;
+            color: #764ba2;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        /* 4. 액션 버튼 영역 */
+        .action-area {
+        	display: flex;
+        	align-items: center;
+        	gap: 5px;
+        	justify-content: center;
+        	margin-top: 15px;
+        }/* 리스트에서 보던 바로 그 버튼 스타일 */
+        .list-action-btn {
+        	background: none;
+        	border: none;
+        	width: 40px;
+        	height: 40px;
+        	border-radius: 50%;
+        	display: flex;
+        	align-items: center;
+        	justify-content: center;
+        	color: #999;
+        	transition: 0.2s;
+        	text-decoration: none;
+        }
+        
+        .list-action-btn:hover {
+        	color: #764ba2 !important;
+        }
+        
+        
+        /* 재생 버튼 강조 (선택 사항: 목록처럼 똑같이 하려면 일반 버튼과 동일하게) */
+        .btn-play-list {
+        	color: #764ba2; /* 아이콘만 보라색 */
+        }
+        .action-btn {
+            width: 55px; height: 55px; border-radius: 50%;
+            border: none; background: #f8f9fa; color: #666;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s ease;
+        }
+        .action-btn:hover {
+        	background: #eee;
+        	transform: translateY(-2px);
+        }
+        .btn-play {
+        	background: #764ba2 !important;
+        	color: white !important;
+        	width: 65px;
+        	height: 65px;
+        }
+
+        /* 5. 가사 섹션 (카드 하단 분리) */
+        .lyrics-section {
+            background: white; border-radius: 24px; padding: 40px;
+            margin-top: 25px; border: 1px solid rgba(0,0,0,0.06);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.03);
+        }
+        .lyrics-title {
+        	font-size: 0.8rem;
+        	font-weight: 800;
+        	color: #bbb;
+        	letter-spacing: 2px;
+        	margin-bottom: 25px;
+        }
+        .lyrics-content {
+        	white-space: pre-wrap;
+        	word-break: break-all;
+        	color: #555;
+        	line-height: 1.8;
+        }
+
+        /* 6. 수정 모드 시 입력창 스타일 (업로드 페이지와 동일) */
+        .edit-input { 
+            border-radius: 10px !important;
+            border: 1px solid #eee !important;
+            padding: 10px 15px !important;
+            margin-bottom: 10px !important;
+            text-align: center;
+        }
+        .form-label-custom {
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: #764ba2;
+            background: #f1f0ff;
+            padding: 2px 8px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+
+<body>
+<header th:replace="~{common/header :: menu}"></header>
+
+<main class="container content-body">
+	<div class="info-container">
+		<div class="mb-4">
+    		<a href="javascript:history.back()" class="text-decoration-none text-muted small">
+    			<i class="bi bi-chevron-left"></i> 목록으로 돌아가기
+    		</a>
+        </div>
+        <div class="detail-card">
+        	<img id="album-art" src="/asset/img/favicon.ico" class="album-art-main" alt="Album Cover">
+        	<div id="info-display-area">
+        		<h2 id="title" class="music-title-text">불러오는 중...</h2>
+        		<p id="artist" class="music-artist-text">가수 이름</p>
+        		<div id="badge-area" class="badge-row">
+        			<span id="genre" class="mini-badge">장르</span>
+        			<span id="album" class="mini-badge">앨범 명</span>
+        			<span id="year" class="mini-badge">발매일</span>
+        		</div>
+        	</div>
+        	<div class="action-area">
+        		<button class="list-action-btn btn-play-list" id="btn-play-list" onclick="playMusic(musicId, title, artist)" title="재생">
+        			<i class="bi bi-play-fill" style="font-size: 1.5rem;"></i>
+        		</button>
+        		<button id="edit-btn" class="list-action-btn" onclick="toggleEditMode()" title="수정">
+        			<i class="bi bi-pencil-square" style="font-size: 1.1rem;"></i>
+        		</button>
+        	</div>
+        </div>
+        <div class="lyrics-section">
+        	<div class="lyrics-title text-center">LYRICS</div>
+        	<div id="lyrics" class="lyrics-content text-center">가사를 불러오고 있습니다...</div>
+        </div>
+	</div>
+</main>
+
+<script src="/js/musicService.js"></script>
+<script>
+
+window.renderPage = function(data) {
+	return;
+};
+
+
+let isEditMode = false;
+let originalData = {};
+
+// 주소에서 id추출
+document.addEventListener("DOMContentLoaded", function() {
+	const urlParams = new URLSearchParams(window.location.search);
+	const musicId = urlParams.get('id');
+	if (musicId) loadMusicDetail(musicId);
+});
+
+
+async function loadMusicDetail(id) {
+	try {
+		const response = await authFetch(`/api/music/musicinfo/${id}`);
+		const music = await response.json();
+		
+		document.getElementById('title').innerText = music.title || "제목 없음";
+		document.getElementById('artist').innerText = music.artist || "가수 정보 없음";
+		document.getElementById('genre').innerText = music.genre || "장르 정보 없음";
+		document.getElementById('album').innerText = music.album || "앨범 정보 없음";
+		document.getElementById('year').innerText = music.year || "발매일 정보 없음";
+		document.getElementById('album-art').src = music.albumCover || '/asset/img/favicon.ico';
+		document.getElementById('lyrics').innerText = music.lyrics || "등록된 가사가 없습니다.";
+		
+		
+		// 1. 재생 버튼 요소를 찾습니다.
+        const playBtn = document.querySelector('.btn-play-list'); 
+        
+        if (playBtn) {
+            // 2. musicService.js의 toggleIcon이 찾을 수 있게 ID를 부여합니다.
+            playBtn.id = `play-btn-${id}`; 
+            
+            // 3. 클릭했을 때 ID, 제목, 가수를 넘겨주도록 설정합니다.
+            playBtn.onclick = () => {
+                playMusic(id, music.title, music.artist);
+            };
+        }
+	} catch (error) {
+		console.error(error);
+	}
+}
+
+
+
+// 수정 기능
+function toggleEditMode() {
+	isEditMode = true;
+	originalData = {
+		title: document.getElementById('title').innerText,
+		artist: document.getElementById('artist').innerText,
+		genre: document.getElementById('genre').innerText,
+		album: document.getElementById('album').innerText,
+		year: document.getElementById('year').innerText,
+		lyrics: document.getElementById('lyrics').innerText
+	};
+	
+
+	document.getElementById('info-display-area').innerHTML = `
+		<div class="text-start">
+			<span class="form-label-custom">곡 제목</span>
+			<input type="text" id="edit-title" class="form-control edit-input" value="${originalData.title}">
+			<span class="form-label-custom">가수</span>
+			<input type="text" id="edit-artist" class="form-control edit-input" value="${originalData.artist}">
+			<div class="row g-2">
+				<div class="col-4"><span class="form-label-custom">장르</span><input type="text" id="edit-genre" class="form-control edit-input" value="${originalData.genre}"></div>
+				<div class="col-4"><span class="form-label-custom">앨범</span><input type="text" id="edit-album" class="form-control edit-input" value="${originalData.album}"></div>
+				<div class="col-4"><span class="form-label-custom">발매</span><input type="text" id="edit-year" class="form-control edit-input" value="${originalData.year}"></div>
+			</div>
+		</div>
+	`;
+	
+	
+	
+	document.getElementById('lyrics').innerHTML = `<textarea id="edit-lyrics" class="form-control" style="height: 300px; border-radius:15px;">${originalData.lyrics}</textarea>`;
+	// 버튼
+	document.querySelector('.action-area').innerHTML = `
+		<button class="list-action-btn" onclick="saveMusicDetail()" title="저장" style="color: #764ba2;">
+			<i class="bi bi-check-lg" style="font-size: 1.5rem;"></i>
+		</button>
+		<button class="list-action-btn" onclick="cancelEdit()" title="취소" style="color: #999;">
+			<i class="bi bi-x-lg" style="font-size: 1.5rem;"></i>
+		</button>
+	`;
+}
+
+// 수정 취소 버튼
+function cancelEdit() {
+	location.reload();
+}
+
+
+// 수정 정보 전송
+async function saveMusicDetail() {
+	const urlParams = new URLSearchParams(window.location.search);
+	const musicId = urlParams.get('id');
+	const updatedData = {
+		title: document.getElementById('edit-title').value,
+		artist: document.getElementById('edit-artist').value,
+		genre: document.getElementById('edit-genre').value,
+		album: document.getElementById('edit-album').value,
+		year: document.getElementById('edit-year').value,
+		lyrics: document.getElementById('edit-lyrics').value
+	};
+	
+	try {
+		const response = await authFetch(`/api/music/update/${musicId}`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(updatedData)
+		});
+		
+		if (response.ok) {
+			Swal.fire({ icon: 'success', title: '저장 완료', showConfirmButton: false, timer: 1500 }).then(() => location.reload());
+		}
+	} catch (error) {
+		Swal.fire('Error', '저장 실패', 'error');
+	}
+}
+
+
+</script>
+</body>
+</html>

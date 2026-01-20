@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <th:block th:replace="~{common/header :: header-library}"></th:block>
+    <title>Music Converter</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <style>
+        /* 1. 기본 폰트 및 배경 설정 */
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            background-color: #ffffff;
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+        }
+        
+            
+        /* 2. 로그인 전 랜딩 화면 (고급스러운 센터 레이아웃) */
+        .landing-wrapper {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            background-color: #ffffff;
+        }
+
+        .login-card {
+            max-width: 400px;
+            width: 90%;
+            padding: 50px 30px;
+            background: #fff;
+            border-radius: 24px;
+            /* musicList 스타일의 미세한 그림자 */
+            box-shadow: 0 10px 40px rgba(0,0,0,0.06);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        /* 3. 메인 변환 화면 스타일 (musicList 일관성 유지) */
+        .content-body { padding-top: 100px; }
+        
+        .text-primary { color: #764ba2 !important; }
+        
+        .btn-primary {
+            background-color: #764ba2;
+            border: none;
+            border-radius: 12px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-primary:hover {
+            background-color: #663d91;
+            transform: translateY(-1px);
+        }
+
+        .converter-card {
+            border: none !important;
+            border-radius: 20px;
+            background: #fdfdfd;
+            /* 목록 페이지의 검색창 디자인과 맞춤 */
+            border: 1px solid rgba(0,0,0,0.06) !important;
+            padding: 2rem;
+        }
+
+        .form-control {
+            border-radius: 12px;
+            border: 1px solid rgba(0,0,0,0.08);
+            padding: 12px 16px;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+        }
+
+        .form-control:focus {
+            border-color: #764ba2;
+            box-shadow: 0 0 0 4px rgba(118, 75, 162, 0.1);
+        }
+
+        .input-group-text {
+            background: transparent;
+            border: none;
+            color: #764ba2;
+        }
+
+        /* 앨범 아트 느낌의 아이콘 박스 */
+        .icon-box {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            color: white;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 1.8rem;
+            box-shadow: 0 8px 20px rgba(118, 75, 162, 0.2);
+        }
+    </style>
+</head>
+<body>
+
+<div id="login-section" class="landing-wrapper">
+    <div class="login-card text-center">
+        <div class="icon-box">
+            <i class="bi bi-music-note-beamed"></i>
+        </div>
+        <h2 class="fw-bold mb-2" style="color: #333; letter-spacing: -1px;">Music Converter</h2>
+        <p class="text-muted mb-4 small"></p>
+        
+        <a th:href="@{/oauth2/authorization/kakao}" class="d-inline-block mt-2">
+            <img src="/asset/img/kakao_login_medium_narrow.png" alt="카카오 로그인" class="rounded-3 shadow-sm" style="height: 48px;">
+        </a>
+    </div>
+</div>
+
+<div id="main-section" class="d-none">
+    <header th:replace="~{common/header :: menu}"></header>
+    
+    <main class="container content-body">
+        <div class="row justify-content-center">
+            <div class="col-md-7 text-center">
+                <div class="mb-5 text-center">
+                	<h1 class="fw-bold display-6 mb-3" style="color: #2c3e50; letter-spacing: -1.5px;">
+                		Music <span style="background: linear-gradient(120deg, #8e44ad, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Studio</span>
+                	</h1>
+                	<div class="mx-auto mb-4" style="width: 40px; height: 3px; background: #764ba2; border-radius: 2px;"></div>
+                	<p class="text-secondary small text-uppercase" style="letter-spacing: 2px; font-weight: 500;">
+                		All your melodies, perfectly refined.
+                	</p>
+                </div>
+                <div class="card converter-card shadow-sm">
+                    <div class="row g-3 mb-3 text-start">
+                        <div class="col-md-5">
+                            <label class="form-label small fw-bold text-muted ps-1">가수</label>
+                            <input type="text" id="artist" class="form-control" placeholder="예: 아이유">
+                        </div>
+                        <div class="col-md-7">
+                            <label class="form-label small fw-bold text-muted ps-1">곡 제목</label>
+                            <input type="text" id="title" class="form-control" placeholder="예: 좋은날">
+                        </div>
+                    </div>	
+
+                    <div class="text-start mb-4">
+                        <label class="form-label small fw-bold text-muted ps-1">YouTube URL</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
+                            <input type="text" id="videoUrl" class="form-control" placeholder="https://www.youtube.com/watch?v=...">
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary w-100 py-3 shadow border-0" id="convertBtn" onclick="handleConvert()"
+                            style="border-radius: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); font-weight: 600; font-size: 1.1rem;">
+                        Start Convert
+                    </button>
+                    
+                    <div class="mt-4 py-2 px-3 bg-light rounded-pill d-inline-block">
+                        <p class="text-muted mb-0" style="font-size: 0.8rem;">
+                            <i class="bi bi-folder-check me-1 text-primary"></i> 
+                            Saved to <span class="fw-bold text-dark">My Music</span> after convert
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+(function() {
+    // [추가] common.js가 아직 처리 전이라면 직접 토큰을 낚아채서 저장
+    const urlParams = new URLSearchParams(window.location.search);
+    const tokenFromUrl = urlParams.get('accessToken');
+    
+    if (tokenFromUrl) {
+        console.log("URL에서 직접 토큰 발견, 저장 시도...");
+        localStorage.setItem('accessToken', tokenFromUrl);
+        // 닉네임 등도 함께 저장
+        const nick = urlParams.get('nickname');
+        if(nick) localStorage.setItem('nickname', decodeURIComponent(nick));
+    }
+
+    console.log("1. 인덱스 초기화 시작");
+    // 저장될 시간을 충분히 주기 위해 0.2초 뒤 실행
+    //setTimeout(renderPage, 200);
+})();
+
+function renderPage() {
+    const token = localStorage.getItem('accessToken');
+    const isLogin = !!token;
+    
+    console.log("2. 최종 로그인 체크:", isLogin);
+
+    const loginSec = document.getElementById('login-section');
+    const mainSec = document.getElementById('main-section');
+    
+    if (isLogin) {
+        console.log("3. 로그인 모드 전환 시작");
+        loginSec.classList.add('d-none');
+        mainSec.classList.remove('d-none');
+        if (typeof refreshHeaderUI === "function") refreshHeaderUI();
+    } else {
+        console.log("3. 여전히 미로그인 상태");
+        loginSec.classList.remove('d-none');
+        mainSec.classList.add('d-none');
+    }
+}
+
+
+async function handleConvert() {
+	const videoUrlInput = document.getElementById('videoUrl');
+	const artistInput = document.getElementById('artist');
+	const titleInput = document.getElementById('title');
+	const convertBtn = document.getElementById('convertBtn');
+	
+	const videoUrl = videoUrlInput?.value.trim();
+	const artist = artistInput?.value.trim();
+	const title = titleInput?.value.trim();
+	
+	if (!artist || !title || !videoUrl) {
+		Swal.fire({
+			icon: 'warning',
+			title: '입력 부족',
+			text: '가수, 제목, URL을 모두 입력해주세요.',
+			confirmButtonColor: '#764ba2'
+		});
+		return;
+	}
+	
+	try {
+		convertBtn.disabled = true;
+		convertBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Converting Music...`;
+		
+		const response = await authFetch('/api/music/convert', {
+			method: 'POST',
+			body: JSON.stringify({ videoUrl, artist, title })
+		});
+		
+		if (response.ok) {
+			Swal.fire({
+				icon: 'success',
+				title: '변환 요청 성공!',
+				text: '새로운 음악이 등록되었습니다.',
+				timer: 1500,
+				showConfirmButton: false
+			}).then(() => {
+				location.href = "/music/musiclist";
+			});
+		} else {
+			const errorData = await response.json().catch(() => ({}));
+			Swal.fire(
+				'오류 발생',
+				errorData.message || '변환 요청에 실패했습니다.', 'error'
+			);
+		}
+	} catch (err) {
+		console.error(err);
+		Swal.fire(
+			'네트워크 오류',
+			'서버와 통신할 수 없습니다.',
+			'error'
+		);
+	} finally {
+		convertBtn.disabled = false;
+		convertBtn.innerHTML = `<i class="bi bi-magic me-2"></i>Convert to Music`;
+	}
+} 
+
+   
+</script>
+</body>
+</html>
