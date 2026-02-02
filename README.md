@@ -38,7 +38,7 @@ YouTube 영상을 MP3 파일로 변환하고 저장하며, 저장된 파일을 �
   - [ ] **Thumbnail API**: YouTube URL 기반 썸네일 이미지 주소 추출 및 반환 
 
 ### ver 2.5
-- [ ] **Metadata Management (ID3 Tag)**:
+- [x] **Metadata Management (ID3 Tag)**:
   - 변환된 음원 파일에서 ID3 Tag(제목, 아티스트, 앨범 아트 등) 추출 및 분석
   - 추출된 메타데이터를 기반으로 DB 및 Elasticsearch 인덱스 자동 업데이트
   - 다운로드 파일 내 메타데이터 주입을 통한 기기별 정보 표시 보정
