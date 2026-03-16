@@ -32,13 +32,14 @@ YouTube 영상을 MP3 파일로 변환하고 저장하며, 저장된 파일을 �
 
 ### ver 2.4
 - [x] **Streaming**: 웹 브라우저 내 실시간 음원 재생 서비스 기능
-- [ ] **Music Integration API**: JSON 응답 기반 REST API
+- [x] **Music Integration API**: JSON 응답 기반 REST API
   - [x] **Convert And Download API**: 음원 추출(mp3/aac/alac) 및 서버 저장 후 처리 결과 JSON 반환
   - [x] **Lyrics Extraction API**: Bugs Music 가사 데이터 수집 및 JSON 반환
-  - [ ] **Thumbnail API**: YouTube URL 기반 썸네일 이미지 주소 추출 및 반환 
+  - [x] **Thumbnail API**: YouTube URL 기반 썸네일 이미지 주소 추출 및 반환 
 
 ### ver 2.5
 - [x] **Metadata Management (ID3 Tag)**:
   - 변환된 음원 파일에서 ID3 Tag(제목, 아티스트, 앨범 아트 등) 추출 및 분석
   - 추출된 메타데이터를 기반으로 DB 및 Elasticsearch 인덱스 자동 업데이트
   - 다운로드 파일 내 메타데이터 주입을 통한 기기별 정보 표시 보정
+  - Tag 수정 및 DB 최신화
