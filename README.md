@@ -1,14 +1,43 @@
 # musicConverter-V2
 YouTube 영상을 MP3 파일로 변환하고 저장하며, 저장된 파일을 언제든 다운로드하여 재생할 수 있는 웹 애플리케이션
 
-### Tech Stack
-- **Language**: Java 17
-- **Framework**: Spring Boot 4.0.1 (Maven)
-- **Database**: Oracle Database, Redis
-- **Search**":  Elasticsearch
-- **Security**: Spring Security, OAuth 2.0 (Kakao), JWT
-- **View**: Thymeleaf
-- **Library**: jaudiotagger
+---
+
+## Tech Stack
+- **Language**: `Java 17`
+- **Framework**: `Spring Boot 4.0.1 (Maven)`
+- **Database**: `Oracle Database`, `Redis`
+- **Search**: `Elasticsearch`
+- **Security**: `Spring Security`, `OAuth 2.0 (Kakao)`, `JWT`
+- **View**: `Thymeleaf`
+- **Library**: `jaudiotagger`
+
+---
+
+## Features
+- **Media Processing**
+  - ID3 Metadata Editing (jaudiotagger)
+  - YouTube → MP3/AAC/ALAC Conversion
+  - Thumbnail Extraction & Processing
+  - Lyrics Crawling & JSON Parsing
+
+- **Search**
+  - Elasticsearch 기반 추천어 자동 완성
+  - 음악 검색 기능 최적화
+
+- **User Experience**
+  - Infinite Scroll 기반 음악 목록 조회
+  - 다운로드 및 업로드 관리
+
+- **Authentication**
+  - Kakao OAuth2 로그인
+  - JWT 기반 인증 및 권한 관리
+
+- **APIs (External/Service Interface)**
+  - YouTube → MP3/AAC Conversion API
+  - iTunes Album Cover Extraction API
+  - Thumbnail Extraction API
+  - Lyrics Crawling API
 
 ---
 
