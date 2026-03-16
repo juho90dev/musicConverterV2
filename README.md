@@ -4,9 +4,11 @@ YouTube 영상을 MP3 파일로 변환하고 저장하며, 저장된 파일을 �
 ### Tech Stack
 - **Language**: Java 17
 - **Framework**: Spring Boot 4.0.1 (Maven)
-- **Database**: Oracle Database, Redis, Elasticsearch (Search)
+- **Database**: Oracle Database, Redis
+- **Search**":  Elasticsearch
 - **Security**: Spring Security, OAuth 2.0 (Kakao), JWT
 - **View**: Thymeleaf
+- **Library**: jaudiotagger
 
 ---
 
